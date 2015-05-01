@@ -112,17 +112,23 @@ GPIOBridge.prototype.discover = function () {
     } while (0);
 
     /* complex but it works - we want to do setup before the offical discovery */
-    var bridge = new GPIOBridge(initd, native);
+    console.log("HERE:A");
+    var bridge = new GPIOBridge(self.initd, native);
 
+    console.log("HERE:B");
     bridge.native.setup(bridge, function(error) {
+        console.log("HERE:C");
         if (error) {
-            logger.info({
+            logger.error({
                 method: "discover/native.setup",
                 error: error,
             }, "error while setting up pins");
             return;
         }
 
+        logger.info({
+            method: "discover/native.setup",
+        }, "discovered");
         self.discovered(bridge);
     });
 
@@ -131,6 +137,8 @@ GPIOBridge.prototype.discover = function () {
 var __is_rpi;
 
 GPIOBridge.prototype._check_pi = function () {
+    var self = this;
+
     if (__is_rpi === undefined) {
         __is_rpi = false;
         try {
@@ -153,13 +161,19 @@ GPIOBridge.prototype._make_pi = function () {
         return;
     }
 
+    logger.error({
+        method: "_make_pi",
+    }, "made pi!");
+
     return {
         setup: function(bridge, done) {
             var pins = bridge.initd.pins;
             var waiting = pins.length;
             var any_error;
 
+            console.log("B.1", waiting);
             var _setup_done = function(error) {
+                console.log("B.done", error, waiting);
                 if (any_error) {
                 } else if (error) {
                     any_error = error;
@@ -170,22 +184,29 @@ GPIOBridge.prototype._make_pi = function () {
             };
 
             
-            for (var pi in bridge.pins) {
-                var pind = bridge.pins[pi];
+            console.log("B.2");
+            for (var pi in pins) {
+                console.log("B.3.1");
+                var pind = pins[pi];
                 if (!pind.pin) {
                     _setup_done(new Error("all pins must define a .pin number"));
                     break;
                 }
 
+                console.log("B.3.2");
                 if (pind.output) {
-                    gpio.setup(pin, gpio.DIR_OUT, _setup_done);
+                    console.log("B.4.1");
+                    rpi_gpio.setup(pind.pin, rpi_gpio.DIR_OUT, _setup_done);
                 } else if (pind.input) {
-                    gpio.setup(pin, gpio.DIR_OUT, _setup_done);
+                    console.log("B.4.2");
+                    rpi_gpio.setup(pind.pin, rpi_gpio.DIR_IN, _setup_done);
                 } else {
+                    console.log("B.4.3");
                     _setup_done(new Error("all pins must define .output or .input"));
                     break;
                 }
             }
+            console.log("B.4");
         },
 
         write: function(bridge) {
