@@ -25,47 +25,16 @@
 var fs = require('fs')
 var child_process = require('child_process')
 
-try {
-    var rpi_gpio = require('rpi-gpio');
-} catch (x) {
-    rpi_gpio = null;
-}
+var rpi = require('./rpi');
 
 var iotdb = require('iotdb');
 var _ = iotdb._;
 var bunyan = iotdb.bunyan;
 
-var logger = bunyan.createLogger({
+var logger = iotdb.logger({
     name: 'homestar-gpio',
     module: 'GPIOBridge',
 });
-
-var _run = function(argv, done) {
-    var argv = argv.concat();
-    var command = argv.splice(0, 1).pop();
-    var process = child_process.spawn(command, argv);
-    var stdout = "";
-    var stderr = "";
-
-    process.stdout.on('data', function (data) {
-        stdout += data;
-    });
-
-    process.stderr.on('data', function (data) {
-        stderr += data;
-    });
-
-    process.on('close', function (code) {
-        if (code !== 0) {
-            var error = new Error("command exited with non-0 status: " + code);
-            error.code = code;
-
-            done(error, stdout, stderr);
-        } else {
-            done(null, stdout, stderr);
-        }
-    });
-}
 
 /* --- constructor --- */
 
@@ -78,16 +47,15 @@ var _run = function(argv, done) {
 var GPIOBridge = function (initd, native) {
     var self = this;
 
-    self.initd = _.defaults(initd,
-        iotdb.keystore().get("bridges/GPIOBridge/initd"), {
+    self.initd = _.defaults(
+        initd,
+        iotdb.keystore().get("bridges/GPIOBridge/initd"),
+        {
             poll: 30
         }
     );
-    self.native = native;   
 
-    if (self.native) {
-        self.queue = _.queue("GPIOBridge");
-    }
+    self.native = native;
 };
 
 GPIOBridge.prototype = new iotdb.Bridge();
@@ -116,208 +84,39 @@ GPIOBridge.prototype.discover = function () {
         pins: self.initd.pins,
     }, "called");
 
-    /*
-     *  This is the core bit of discovery. As you find new
-     *  thimgs, make a new GPIOBridge and call 'discovered'.
-     *  The first argument should be self.initd, the second
-     *  the thing that you do work with
-     */
-    /*
-    var s = self._template();
-    s.on('something', function (native) {
-        self.discovered(new GPIOBridge(self.initd, native));
-    });
-     */
+
+    var bridge;
     var native;
 
-    do {
-        native = self._check_pi();
-        if (native) {
-            break;
-        }
-
-        /* default */
-        native = self._make_command();
-    } while (0);
+    if (rpi.check()) {
+        native = new rpi.Delegate();
+        bridge = new GPIOBridge(self.initd, native);
+    } else {
+        return;
+    }
 
     /* complex but it works - we want to do setup before the offical discovery */
-    console.log("HERE:A");
-    var bridge = new GPIOBridge(self.initd, native);
-
-    console.log("HERE:B");
-    bridge.native.setup(bridge, function(error) {
-        console.log("HERE:C");
+    bridge._setup(function(error) {
         if (error) {
             logger.error({
-                method: "discover/native.setup",
+                method: "discover/_setup",
                 error: error,
             }, "error while setting up pins");
             return;
         }
 
         logger.info({
-            method: "discover/native.setup",
+            method: "_setup",
         }, "discovered");
+
         self.discovered(bridge);
     });
-
 };
 
-var __is_rpi;
-
-GPIOBridge.prototype._check_pi = function () {
-    var self = this;
-
-    if (__is_rpi === undefined) {
-        __is_rpi = false;
-        try {
-            var contents = fs.readFileSync('/etc/os-release', 'utf8');
-            if (contents.match(/^ID=raspbian$/m)) {
-                __is_rpi = true;
-            }
-        } 
-        catch (x) {
-        }
-    }
-
-    if (__is_rpi) {
-        return self._make_pi();
-    }
-};
-
-GPIOBridge.prototype._make_pi = function () {
-    if (!rpi_gpio) {
-        return;
-    }
-
-    logger.error({
-        method: "_make_pi",
-    }, "made pi!");
-
-    return {
-        setup: function(bridge, done) {
-            var pins = bridge.initd.pins;
-            var waiting = pins.length;
-            var any_error;
-
-            var _setup_done = function(error) {
-                if (any_error) {
-                } else if (error) {
-                    any_error = error;
-                    done(error);
-                } else if (--waiting === 0) {
-                    done(null);
-                }
-            };
-
-            for (var pi in pins) {
-                var pind = pins[pi];
-                if (!pind.pin) {
-                    _setup_done(new Error("all pins must define a .pin number"));
-                    break;
-                }
-
-                if (pind.output) {
-                    _run([ "gpio", "mode", "" + pind.pin, "out" ], _setup_done);
-                } else if (pind.input) {
-                    _run([ "gpio", "mode", "" + pind.pin, "in" ], _setup_done);
-                } else {
-                    _setup_done(new Error("all pins must define .output or .input"));
-                    break;
-                }
-            }
-        },
-
-        write: function(bridge) {
-        },
-
-        read: function(bridge) {
-        },
-
-        on: function(bridge) {
-        },
-    }
-};
-
-GPIOBridge.prototype._make_pi_direct = function () {
-    if (!rpi_gpio) {
-        return;
-    }
-
-    logger.error({
-        method: "_make_pi",
-    }, "made pi!");
-
-    return {
-        setup: function(bridge, done) {
-            var pins = bridge.initd.pins;
-            var waiting = pins.length;
-            var any_error;
-
-            console.log("B.1", waiting);
-            var _setup_done = function(error) {
-                console.log("B.done", error, waiting);
-                if (any_error) {
-                } else if (error) {
-                    any_error = error;
-                    done(error);
-                } else if (--waiting === 0) {
-                    done(null);
-                }
-            };
-
-            
-            console.log("B.2");
-            for (var pi in pins) {
-                console.log("B.3.1");
-                var pind = pins[pi];
-                if (!pind.pin) {
-                    _setup_done(new Error("all pins must define a .pin number"));
-                    break;
-                }
-
-                console.log("B.3.2");
-                if (pind.output) {
-                    console.log("B.4.1");
-                    rpi_gpio.setup(pind.pin, rpi_gpio.DIR_OUT, _setup_done);
-                } else if (pind.input) {
-                    console.log("B.4.2");
-                    rpi_gpio.setup(pind.pin, rpi_gpio.DIR_IN, _setup_done);
-                } else {
-                    console.log("B.4.3");
-                    _setup_done(new Error("all pins must define .output or .input"));
-                    break;
-                }
-            }
-            console.log("B.4");
-        },
-
-        write: function(bridge) {
-        },
-
-        read: function(bridge) {
-        },
-
-        on: function(bridge) {
-        },
-    }
-};
-
-GPIOBridge.prototype._make_command = function () {
-    return {
-        setup: function(initd) {
-            done(null);
-        },
-
-        write: function() {
-        },
-
-        read: function() {
-        },
-
-        on: function() {
-        },
-    }
+/**
+ */
+GPIOBridge.prototype._setup = function (done) {
+    this.native.setup(this, done);
 };
 
 /**
@@ -325,6 +124,7 @@ GPIOBridge.prototype._make_command = function () {
  */
 GPIOBridge.prototype.connect = function (connectd) {
     var self = this;
+
     if (!self.native) {
         return;
     }
@@ -395,26 +195,7 @@ GPIOBridge.prototype.push = function (pushd) {
         pushd: pushd
     }, "push");
 
-    var qitem = {
-        // if you set "id", new pushes will unqueue old pushes with the same id
-        // id: self.number, 
-        run: function () {
-            self._push(pushd);
-            self.queue.finished(qitem);
-        }
-    };
-    self.queue.add(qitem);
-};
-
-/**
- *  Do the work of pushing. If you don't need queueing
- *  consider just moving this up into push
- */
-GPIOBridge.prototype._push = function (pushd) {
-    logger.info({
-        method: "_push",
-        pushd: pushd
-    }, "push");
+    self.native.push(self, pushd);
 };
 
 /**
