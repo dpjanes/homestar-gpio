@@ -9,7 +9,16 @@
 var iotdb = require('iotdb');
 var iot = iotdb.iot();
 
-var things = iot.connect('PinIn');
+var things = iot.connect({
+    model: 'PiIn',
+    pins: [
+        {
+            pin: 26,
+            attribute: "value",
+            input: true,
+        },
+    ]
+});
 things.on("state", function(thing) {
     console.log("+", "state", thing.thing_id(), "\n ", thing.state("istate"));
 });

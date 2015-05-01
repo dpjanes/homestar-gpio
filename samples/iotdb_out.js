@@ -13,7 +13,7 @@ var things = iot.connect({
     model: 'PinOut',
     pins: [
         {
-            pin: 27,
+            pin: 26,
             attribute: "value",
             output: true,
         },
