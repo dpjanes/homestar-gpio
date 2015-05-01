@@ -10,7 +10,7 @@ var iotdb = require("iotdb");
 
 exports.Model = iotdb.make_model('PinOut')
     .name("PinOut")
-    .o("on", iotdb.boolean)
+    .o("value", iotdb.boolean)
     .make();
 
 exports.binding = {

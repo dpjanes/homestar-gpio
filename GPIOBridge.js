@@ -22,6 +22,13 @@
 
 "use strict";
 
+var fs = require('fs')
+try {
+    var rpi_gpio = require('rpi-gpio');
+} catch (x) {
+    rpi_gpio = null;
+}
+
 var iotdb = require('iotdb');
 var _ = iotdb._;
 var bunyan = iotdb.bunyan;
@@ -47,7 +54,7 @@ var GPIOBridge = function (initd, native) {
             poll: 30
         }
     );
-    self.native = native;   // the thing that does the work - keep this name
+    self.native = native;   
 
     if (self.native) {
         self.queue = _.queue("GPIOBridge");
@@ -68,8 +75,16 @@ GPIOBridge.prototype.name = function () {
 GPIOBridge.prototype.discover = function () {
     var self = this;
 
+    if (!self.initd.pins) {
+        logger.info({
+            method: "discover",
+            cause: "you must define 'pins' for the Thing - otherwise how would we know?",
+        }, "no 'pins'");
+    }
+
     logger.info({
-        method: "discover"
+        method: "discover",
+        pins: self.initd.pins,
     }, "called");
 
     /*
@@ -78,10 +93,127 @@ GPIOBridge.prototype.discover = function () {
      *  The first argument should be self.initd, the second
      *  the thing that you do work with
      */
+    /*
     var s = self._template();
     s.on('something', function (native) {
         self.discovered(new GPIOBridge(self.initd, native));
     });
+     */
+    var native;
+
+    do {
+        native = self._check_pi();
+        if (native) {
+            break;
+        }
+
+        /* default */
+        native = self._make_command();
+    } while (0);
+
+    /* complex but it works - we want to do setup before the offical discovery */
+    var bridge = new GPIOBridge(initd, native);
+
+    bridge.native.setup(bridge, function(error) {
+        if (error) {
+            logger.info({
+                method: "discover/native.setup",
+                error: error,
+            }, "error while setting up pins");
+            return;
+        }
+
+        self.discovered(bridge);
+    });
+
+};
+
+var __is_rpi;
+
+GPIOBridge.prototype._check_pi = function () {
+    if (__is_rpi === undefined) {
+        __is_rpi = false;
+        try {
+            var contents = fs.readFileSync('/etc/os-release', 'utf8');
+            if (contents.match(/^ID=raspbian$/m)) {
+                __is_rpi = true;
+            }
+        } 
+        catch (x) {
+        }
+    }
+
+    if (__is_rpi) {
+        return self._make_pi();
+    }
+};
+
+GPIOBridge.prototype._make_pi = function () {
+    if (!rpi_gpio) {
+        return;
+    }
+
+    return {
+        setup: function(bridge, done) {
+            var pins = bridge.initd.pins;
+            var waiting = pins.length;
+            var any_error;
+
+            var _setup_done = function(error) {
+                if (any_error) {
+                } else if (error) {
+                    any_error = error;
+                    done(error);
+                } else if (--waiting === 0) {
+                    done(null);
+                }
+            };
+
+            
+            for (var pi in bridge.pins) {
+                var pind = bridge.pins[pi];
+                if (!pind.pin) {
+                    _setup_done(new Error("all pins must define a .pin number"));
+                    break;
+                }
+
+                if (pind.output) {
+                    gpio.setup(pin, gpio.DIR_OUT, _setup_done);
+                } else if (pind.input) {
+                    gpio.setup(pin, gpio.DIR_OUT, _setup_done);
+                } else {
+                    _setup_done(new Error("all pins must define .output or .input"));
+                    break;
+                }
+            }
+        },
+
+        write: function(bridge) {
+        },
+
+        read: function(bridge) {
+        },
+
+        on: function(bridge) {
+        },
+    }
+};
+
+GPIOBridge.prototype._make_command = function () {
+    return {
+        setup: function(initd) {
+            done(null);
+        },
+
+        write: function() {
+        },
+
+        read: function() {
+        },
+
+        on: function() {
+        },
+    }
 };
 
 /**
@@ -163,7 +295,7 @@ GPIOBridge.prototype.push = function (pushd) {
         // if you set "id", new pushes will unqueue old pushes with the same id
         // id: self.number, 
         run: function () {
-            self._pushd(pushd);
+            self._push(pushd);
             self.queue.finished(qitem);
         }
     };
@@ -175,8 +307,10 @@ GPIOBridge.prototype.push = function (pushd) {
  *  consider just moving this up into push
  */
 GPIOBridge.prototype._push = function (pushd) {
-    if (pushd.on !== undefined) {
-    }
+    logger.info({
+        method: "_push",
+        pushd: pushd
+    }, "push");
 };
 
 /**
