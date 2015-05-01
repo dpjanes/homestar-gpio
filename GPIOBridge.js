@@ -200,9 +200,7 @@ GPIOBridge.prototype._make_pi = function () {
             var waiting = pins.length;
             var any_error;
 
-            console.log("B.1", waiting);
             var _setup_done = function(error) {
-                console.log("B.done", error, waiting);
                 if (any_error) {
                 } else if (error) {
                     any_error = error;
@@ -212,10 +210,7 @@ GPIOBridge.prototype._make_pi = function () {
                 }
             };
 
-            
-            console.log("B.2");
             for (var pi in pins) {
-                console.log("B.3.1");
                 var pind = pins[pi];
                 if (!pind.pin) {
                     _setup_done(new Error("all pins must define a .pin number"));
@@ -231,7 +226,6 @@ GPIOBridge.prototype._make_pi = function () {
                     break;
                 }
             }
-            console.log("B.4");
         },
 
         write: function(bridge) {
