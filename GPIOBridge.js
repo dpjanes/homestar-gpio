@@ -23,6 +23,8 @@
 "use strict";
 
 var fs = require('fs')
+var child_process = require('child_process')
+
 try {
     var rpi_gpio = require('rpi-gpio');
 } catch (x) {
@@ -33,12 +35,39 @@ var iotdb = require('iotdb');
 var _ = iotdb._;
 var bunyan = iotdb.bunyan;
 
-// var template = require('template');
-
 var logger = bunyan.createLogger({
     name: 'homestar-gpio',
     module: 'GPIOBridge',
 });
+
+var _run = function(argv, done) {
+    var argv = argv.concat();
+    var command = argv.splice(0, 1).pop();
+    var process = child_process.spawn(command, argv);
+    var stdout = "";
+    var stderr = "";
+
+    process.stdout.on('data', function (data) {
+        stdout += data;
+    });
+
+    process.stderr.on('data', function (data) {
+        stderr += data;
+    });
+
+    process.on('close', function (code) {
+        if (code !== 0) {
+            var error = new Error("command exited with non-0 status: " + code);
+            error.code = code;
+
+            done(error, stdout, stderr);
+        } else {
+            done(null, stdout, stderr);
+        }
+    });
+}
+
+/* --- constructor --- */
 
 /**
  *  See {iotdb.bridge.Bridge#Bridge} for documentation.
@@ -157,6 +186,66 @@ GPIOBridge.prototype._check_pi = function () {
 };
 
 GPIOBridge.prototype._make_pi = function () {
+    if (!rpi_gpio) {
+        return;
+    }
+
+    logger.error({
+        method: "_make_pi",
+    }, "made pi!");
+
+    return {
+        setup: function(bridge, done) {
+            var pins = bridge.initd.pins;
+            var waiting = pins.length;
+            var any_error;
+
+            console.log("B.1", waiting);
+            var _setup_done = function(error) {
+                console.log("B.done", error, waiting);
+                if (any_error) {
+                } else if (error) {
+                    any_error = error;
+                    done(error);
+                } else if (--waiting === 0) {
+                    done(null);
+                }
+            };
+
+            
+            console.log("B.2");
+            for (var pi in pins) {
+                console.log("B.3.1");
+                var pind = pins[pi];
+                if (!pind.pin) {
+                    _setup_done(new Error("all pins must define a .pin number"));
+                    break;
+                }
+
+                if (pind.output) {
+                    _run([ "gpio", "mode", "" + pind.pin, "out" ], _setup_done);
+                } else if (pind.input) {
+                    _run([ "gpio", "mode", "" + pind.pin, "in" ], _setup_done);
+                } else {
+                    _setup_done(new Error("all pins must define .output or .input"));
+                    break;
+                }
+            }
+            console.log("B.4");
+        },
+
+        write: function(bridge) {
+        },
+
+        read: function(bridge) {
+        },
+
+        on: function(bridge) {
+        },
+    }
+};
+
+GPIOBridge.prototype._make_pi_direct = function () {
     if (!rpi_gpio) {
         return;
     }
