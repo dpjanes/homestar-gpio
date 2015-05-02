@@ -22,7 +22,7 @@
 
 "use strict";
 
-exports.Bridge = require('./GPIOBridge');
+exports.Bridge = require('./GPIOBridge').Bridge;
 exports.bindings = [
     require('./models/PinIn').binding,
     require('./models/PinOut').binding,

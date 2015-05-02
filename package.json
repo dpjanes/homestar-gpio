@@ -22,7 +22,7 @@
     "main": "index.js", 
     "name": "homestar-gpio", 
     "peerDependencies": {
-        "iotdb": ">=0.6.3"
+        "iotdb": ">=0.6.5"
     }, 
     "private": false, 
     "repository": {
