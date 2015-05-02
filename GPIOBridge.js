@@ -131,24 +131,11 @@ GPIOBridge.prototype.connect = function (connectd) {
 
     self._validate_connect(connectd);
 
-    self._setup_polling();
-    self.pull();
-};
+    self.native.connect(self, connectd);
 
-GPIOBridge.prototype._setup_polling = function () {
-    var self = this;
-    if (!self.initd.poll) {
-        return;
-    }
-
-    var timer = setInterval(function () {
-        if (!self.native) {
-            clearInterval(timer);
-            return;
-        }
-
+    process.nextTick(function() {
         self.pull();
-    }, self.initd.poll * 1000);
+    });
 };
 
 GPIOBridge.prototype._forget = function () {
@@ -206,6 +193,8 @@ GPIOBridge.prototype.pull = function () {
     if (!self.native) {
         return;
     }
+
+    self.native.pull(self);
 };
 
 /* --- state --- */
