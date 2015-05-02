@@ -10,10 +10,10 @@ var iotdb = require('iotdb');
 var iot = iotdb.iot();
 
 var things = iot.connect({
-    model: 'PiIn',
+    model: 'PinIn',
     pins: [
         {
-            pin: 11,
+            pin: 10,
             attribute: "value",
             input: true,
         },

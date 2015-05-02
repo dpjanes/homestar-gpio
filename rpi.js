@@ -109,9 +109,41 @@ RPi.prototype.setup = function (self, done) {
     }
 };
 
+RPi.prototype.connect = function (self, connectd) {
+    for (var pi in self.initd.pins) {
+        var pind = self.initd.pins[pi];
+        if (!pind.input)
+            continue;
+        }
+
+        this.connect_input(self, pind);
+    };
+}
+
+RPi.prototype._connect_pind = function (self, pind) {
+    _run([ "gpio", "wfi", "" + pind.pin, "both", function(error) {
+        if (error) {
+            return;
+        }
+
+        _run([ "gpio", "read", "" + pind.pin, function(error, stdin, stdout) {
+            if (!error) {
+                console.log("HERE:AAA", stdin);
+            }
+
+            this._connect_pind(self, pnd);
+        });
+    });
+}
+
 RPi.prototype.push = function (self, pushd) {
     var _done = function(error) {
-        console.log("#", error);
+        if (error) {
+            logger.error({
+                method: "push",
+                error: error,
+            }, "error reported running GPIO command");
+        }
     };
 
     for (var pi in self.initd.pins) {
@@ -122,7 +154,6 @@ RPi.prototype.push = function (self, pushd) {
             continue;
         }
 
-        console.log("DO", code, value, pind);
         _run([ "gpio", "write", "" + pind.pin, value ? "0": "1" ], _done);
     };
 };

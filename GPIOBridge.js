@@ -73,7 +73,7 @@ GPIOBridge.prototype.discover = function () {
     var self = this;
 
     if (!self.initd.pins) {
-        logger.info({
+        logger.error({
             method: "discover",
             cause: "you must define 'pins' for the Thing - otherwise how would we know?",
         }, "no 'pins'");
