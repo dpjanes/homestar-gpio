@@ -70,7 +70,7 @@ var RPi = function () {
 RPi.prototype.setup = function (bridge, done) {
     bridge._attributed = {};
 
-    var waiting = bridge.initd.pins.length;
+    var waiting = bridge.initd && bridge.initd.pins && bridge.initd.pins.length;
     var any_error;
 
     var _setup_done = function(error) {

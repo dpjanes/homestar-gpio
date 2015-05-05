@@ -16,4 +16,5 @@ exports.Model = iotdb.make_model('PinIn')
 exports.binding = {
     bridge: require('../GPIOBridge').Bridge,
     model: exports.Model,
+    discover: false,
 };
