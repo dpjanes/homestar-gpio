@@ -157,13 +157,18 @@ RPi.prototype.connect = function (bridge, connectd) {
 };
 
 
-RPi.prototype.push = function (bridge, pushd) {
+RPi.prototype.push = function (bridge, pushd, done) {
+    var dcount = 1;
     var _done = function(error) {
         if (error) {
             logger.error({
                 method: "push",
                 error: error,
             }, "error reported running GPIO command");
+        }
+
+        if (--dcount === 0) {
+            done();
         }
     };
 
@@ -175,8 +180,11 @@ RPi.prototype.push = function (bridge, pushd) {
             continue;
         }
 
+        dcount++;
         _run([ "gpio", "write", "" + pind.pin, value ? "0": "1" ], _done);
     };
+
+    _done();
 };
 
 RPi.prototype.pull = function (bridge) {

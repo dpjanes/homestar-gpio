@@ -169,9 +169,10 @@ GPIOBridge.prototype.disconnect = function () {
 /**
  *  See {iotdb.bridge.Bridge#push} for documentation.
  */
-GPIOBridge.prototype.push = function (pushd) {
+GPIOBridge.prototype.push = function (pushd, done) {
     var self = this;
     if (!self.native) {
+        done(new Error("not connected", pushd));
         return;
     }
 
@@ -182,7 +183,7 @@ GPIOBridge.prototype.push = function (pushd) {
         pushd: pushd
     }, "push");
 
-    self.native.push(self, pushd);
+    self.native.push(self, pushd, done);
 };
 
 /**
