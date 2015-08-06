@@ -210,11 +210,11 @@ GPIOBridge.prototype.meta = function () {
     }
 
     return {
-        "iot:thing": _.id.thing_urn.unique("GPIO", self.native.uuid, self.initd.number),
+        "iot:thing-id": _.id.thing_urn.unique("GPIO", self.native.uuid, self.initd.number),
         "schema:name": self.native.name || "GPIO",
 
         // "iot:number": self.initd.number,
-        // "iot:device": _.id.thing_urn.unique("GPIO", self.native.uuid),
+        // "iot:device-id": _.id.thing_urn.unique("GPIO", self.native.uuid),
         // "schema:manufacturer": "",
         // "schema:model": "",
     };
