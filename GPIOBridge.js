@@ -213,7 +213,7 @@ GPIOBridge.prototype.meta = function () {
         "iot:thing-id": _.id.thing_urn.unique("GPIO", self.native.uuid, self.initd.number),
         "schema:name": self.native.name || "GPIO",
 
-        // "iot:number": self.initd.number,
+        // "iot:thing-number": self.initd.number,
         // "iot:device-id": _.id.thing_urn.unique("GPIO", self.native.uuid),
         // "schema:manufacturer": "",
         // "schema:model": "",
