@@ -1,0 +1,9 @@
+CREATE MODEL PinOut WITH
+    schema:name = "PinOut"
+ATTRIBUTE value WITH
+    schema:name = "value",
+    iot:purpose = iot-purpose:value,
+    iot:type = iot:type.boolean,
+    iot:read = false,
+    iot:write = true
+;
