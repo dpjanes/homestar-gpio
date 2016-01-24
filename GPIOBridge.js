@@ -29,7 +29,6 @@ var rpi = require('./rpi');
 
 var iotdb = require('iotdb');
 var _ = iotdb._;
-var bunyan = iotdb.bunyan;
 
 var logger = iotdb.logger({
     name: 'homestar-gpio',
