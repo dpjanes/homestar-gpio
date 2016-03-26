@@ -3,9 +3,9 @@
  *
  *  David Janes
  *  IOTDB.org
- *  2014-05-01
+ *  2016-03-25
  *
- *  Copyright [2013-2015] [David P. Janes]
+ *  Copyright [2013-2016] [David P. Janes]
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,218 +22,166 @@
 
 "use strict";
 
-var child_process = require('child_process')
-var fs = require('fs')
+const Q = require('q')
 
-var iotdb = require('iotdb');
-var _ = iotdb._;
+const iotdb = require('iotdb');
+const _ = iotdb._;
 
-var logger = iotdb.logger({
+var gpio;
+try {
+    gpio = require('rpi-gpio');
+} catch (x) {
+};
+
+const logger = iotdb.logger({
     name: 'homestar-gpio',
     module: 'rpi',
 });
 
-var _run = function(argv, done) {
-    var stdout = "";
-    var stderr = "";
-
-    var argv = argv.concat();
-    var command = argv.splice(0, 1).pop();
-    var process = child_process.spawn(command, argv);
-
-    process.on('error', done);
-
-    process.stdout.on('data', function (data) {
-        stdout += data;
-    });
-
-    process.stderr.on('data', function (data) {
-        stderr += data;
-    });
-
-    process.on('close', function (code) {
-        if (code !== 0) {
-            var error = new Error("command exited with non-0 status: " + code);
-            error.code = code;
-
-            done(error, stdout, stderr);
-        } else {
-            done(null, stdout, stderr);
-        }
-    });
-}
-
-var RPi = function () {
+const RPi = function () {
+    var self = this;
+    self._code2iodd = {};
+    self._pin2coded = {};
+    self._errord = {};
 };
 
 RPi.prototype.setup = function (bridge, done) {
-    bridge._attributed = {};
+    var self = this;
+    var promises = [];
 
-    var waiting = bridge.initd && bridge.initd.pins && bridge.initd.pins.length;
-    var any_error;
+   _.mapObject(bridge.initd.init, function(init_pind, code) {
+        _.mapObject(init_pind, function(pin, mode) {
+            var setup_promise = null;
+            var write = null;
+            var read = false;
 
-    var _setup_done = function(error) {
-        if (any_error) {
-        } else if (error) {
-            any_error = error;
-            done(error);
-        } else if (--waiting === 0) {
+            if (mode === "din") {
+                setup_promise = Q.ninvoke(gpio, "setup", pin, gpio.DIR_IN, gpio.EDGE_BOTH);
+                read = true;
+            } else if (mode === "dout") {
+                setup_promise = Q.ninvoke(gpio, "setup", pin, gpio.DIR_OUT);
+                write = function(value, done) {
+                    gpio.write(pin, value, done);
+                };
+            } else if (mode === "ain") {
+            } else if (mode === "aout") {
+            } else {
+                logger.error({
+                    method: "setup",
+                    init_pind: init_pind,
+                    mode: mode,
+                    cause: "likely a user error when initially connecting to the Model",
+                }, "unknown pin mode -- ignoring, but this is bad");
+                return;
+            }
+
+            if (setup_promise) {
+                promises.push(setup_promise);
+
+                if (write) {
+                    self._code2iodd[code] = {
+                        write: write
+                    };
+                }
+
+                if (read) {
+                    self._pin2coded[pin] = code;
+                }
+            }
+        });
+    });
+
+    Q.all(promises)
+        .then(function() {
             done(null);
-        }
-    };
+        })
+        .catch(function(error) {
+            done(error);
+        });
 
-
-    for (var pi in bridge.initd.pins) {
-        var pind = bridge.initd.pins[pi];
-        if (!pind.pin) {
-            _setup_done(new Error("all pins must define a .pin number"));
-            break;
-        }
-
-        if (!pind.attribute) {
-            _setup_done(new Error("all pins must define a .attribute code"));
-            break;
-        }
-
-        bridge._attributed[pind.attribute] = pind;
-
-        if (pind.output) {
-            _run([ "gpio", "mode", "" + pind.pin, "out" ], _setup_done);
-        } else if (pind.input) {
-            _run([ "gpio", "mode", "" + pind.pin, "in" ], _setup_done);
-        } else {
-            _setup_done(new Error("all pins must define .output or .input"));
-            break;
-        }
-    }
 };
 
 RPi.prototype.connect = function (bridge, connectd) {
-    var _connect_pind = function (pind) {
-        _run([ "gpio", "wfi", "" + pind.pin, "both", ], function(error) {
-            if (error) {
-                logger.error({
-                    method: "connect",
-                    error: error,
-                    stderr: stderr,
-                    pind: pind,
-                }, "error reported running GPIO command - polling will not happen on this pin");
-                return;
-            }
+    var self = this;
 
-            _run([ "gpio", "read", "" + pind.pin, ], function(error, stdout, stderr) {
-                if (!error) {
-                    var value = null;
-                    if (stdout.match(/^1/)) {
-                        value = true;
-                    } else if (stdout.match(/^0/)) {
-                        value = false;
-                    }
-
-                    if ((value !== null) && (value !== pind._value)) {
-                        pind._value = value;
-
-                        var pulld = {};
-                        pulld[pind.attribute] = value;
-
-                        bridge.pulled(pulld);
-                    }
-                }
-
-                _connect_pind(pind);
-            });
-        });
-    };
-
-    for (var pi in bridge.initd.pins) {
-        var pind = bridge.initd.pins[pi];
-        if (!pind.input) {
-            continue;
+    gpio.on('change', function(pin, value) {
+        var code = self._pin2coded[pin];
+        if (!code) {
+            return;
         }
 
-        _connect_pind(pind);
-    };
+        if (!bridge.native) {
+            return;
+        }
+
+        if (bridge.istate[code] === value) {
+            return;
+        }
+
+        bridge.istate[code] = value;
+        
+        bridge.pulled(bridge.istate);
+    });
 };
 
-
 RPi.prototype.push = function (bridge, pushd, done) {
-    var dcount = 1;
-    var _done = function(error) {
-        if (error) {
-            logger.error({
-                method: "push",
-                error: error,
-            }, "error reported running GPIO command");
+    var self = this;
+    var promises = [];
+
+    _.mapObject(pushd, function(value, code) {
+        var iod = self._code2iodd[code];
+        if (!iod) {
+            if (!self._errord[code]) {
+                self._errord[code] = true;
+
+                logger.error({
+                    method: "push",
+                    value: value,
+                    code: code,
+                    cause: "likely caller error",
+                }, "this code is not recognized");
+            };
+
+            return;
         }
 
-        if (--dcount === 0) {
-            done();
+        if (!iod.write) {
+            if (!self._errord[code]) {
+                self._errord[code] = true;
+
+                logger.error({
+                    method: "push",
+                    value: value,
+                    code: code,
+                    cause: "likely caller error",
+                }, "this code cannot be pushed to");
+            };
+
+            return;
         }
-    };
 
-    for (var pi in bridge.initd.pins) {
-        var pind = bridge.initd.pins[pi];
-        var code = pind.attribute;
-        var value = pushd[code];
-        if (value === undefined) {
-            continue;
-        }
+        promises.push(Q.nfcall(iod.write, value));
+    });
 
-        dcount++;
-        _run([ "gpio", "write", "" + pind.pin, value ? "0": "1" ], _done);
-    };
-
-    _done();
+    Q.all(promises)
+        .then(function() {
+            done(null);
+        })
+        .catch(function(error) {
+            done(error);
+        });
 };
 
 RPi.prototype.pull = function (bridge) {
-    var _pull_pind = function (pind) {
-        _run([ "gpio", "read", "" + pind.pin, ], function(error, stdout, stderr) {
-            if (error) {
-                logger.error({
-                    method: "pull",
-                    error: error,
-                    stderr: stderr,
-                    pind: pind,
-                }, "error reported running GPIO command");
-                return;
-            }
-
-            var value = null;
-            if (stdout.match(/^1/)) {
-                value = true;
-            } else if (stdout.match(/^0/)) {
-                value = false;
-            } else {
-                return;
-            }
-
-            if (value === pind._value) {
-                return;
-            }
-
-            pind._value = value;
-
-            var pulld = {};
-            pulld[pind.attribute] = value;
-
-            bridge.pulled(pulld);
-        });
-    };
-
-    for (var pi in bridge.initd.pins) {
-        var pind = bridge.initd.pins[pi];
-        if (!pind.input) {
-            continue;
-        }
-
-        _pull_pind(pind);
-    };
 };
 
 var __is_rpi;
 
 var check = function () {
+    if (!gpio) {
+        return false;
+    }
+
     if (__is_rpi === undefined) {
         __is_rpi = false;
         try {

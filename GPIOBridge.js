@@ -5,7 +5,7 @@
  *  IOTDB.org
  *  2014-04-30
  *
- *  Copyright [2013-2015] [David P. Janes]
+ *  Copyright [2013-2016] [David P. Janes]
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,12 +49,11 @@ var GPIOBridge = function (initd, native) {
     self.initd = _.defaults(
         initd,
         iotdb.keystore().get("bridges/GPIOBridge/initd"),
-        {
-            poll: 30
-        }
+        {}
     );
 
     self.native = native;
+    self.istate = {};
 };
 
 GPIOBridge.prototype = new iotdb.Bridge();
@@ -71,16 +70,17 @@ GPIOBridge.prototype.name = function () {
 GPIOBridge.prototype.discover = function () {
     var self = this;
 
-    if (!self.initd.pins) {
+    if (!self.initd.init) {
+        console.log(self.initd);
         logger.error({
             method: "discover",
-            cause: "you must define 'pins' for the Thing - otherwise how would we know?",
+            cause: "you must define 'init' for the Thing - otherwise how would we know?",
         }, "no 'pins'");
     }
 
     logger.info({
         method: "discover",
-        pins: self.initd.pins,
+        init: self.initd.init,
     }, "called");
 
 

@@ -4,8 +4,12 @@
         "url": "https://github.com/dpjanes/homestar-gpio/issues"
     }, 
     "dependencies": {
-        "iotdb": ">=0.12.0"
+        "iotdb": ">=0.12.0",
+        "q": ">=0.12.0"
     }, 
+    "optionalDependencies": {
+        "rpi-gpio": ">=0.7.0"
+    },
     "description": "HomeStar / IOTDB Bridge for GPIO", 
     "devDependencies": {
         "grunt": "~0.4.5", 
