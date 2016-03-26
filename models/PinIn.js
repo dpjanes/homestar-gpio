@@ -8,6 +8,6 @@
 
 exports.binding = {
     bridge: require('../GPIOBridge').Bridge,
-    model: require('./PinIn.json'),
+    model: require('./pin-in.json'),
     discover: false,
 };
