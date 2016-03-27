@@ -1,7 +1,7 @@
 /*
- *  How to use this module in IOTDB / HomeStar
- *  This is the best way to do this
- *  Note: to work, this package must have been installed by 'homestar install' 
+ *  Demonstrate ValueBoolean model
+ *
+ *  See ./README.md for setup
  */
 
 "use strict";

@@ -1,9 +1,7 @@
 /*
- *  Demonstrate Digital Read
+ *  Test Digital Read
  *
- *  Connect buttons to Raspberry Pi pins 35 and/or 37 (BCM 19/26)
- *
- *  Prefer the iotdb_* versions
+ *  See ./README.md for setup
  */
 
 "use strict";

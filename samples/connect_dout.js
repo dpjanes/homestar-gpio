@@ -1,9 +1,7 @@
 /*
- *  Demonstrate Digital Write
+ *  Test Digital Write
  *
- *  Connect an LED to RPI pin 33 / BCM pin 13
- *
- *  Prefer the iotdb_* versions
+ *  See ./README.md for setup
  */
 
 "use strict";
