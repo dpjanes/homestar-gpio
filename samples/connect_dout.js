@@ -12,6 +12,7 @@ const _ = iotdb._;
 const Bridge = require('../GPIOBridge').Bridge;
 
 const exemplar = new Bridge({
+    uuid: 'DEEC41A6-C3E2-4552-9945-FE9DDC11F82C',
     init: {
         "value": {
             "dout": 33,

@@ -14,6 +14,7 @@ var iot = iotdb.iot();
 var things = iot.connect({
     model: "ValueBoolean",
     bridge: "GPIOBridge",
+    uuid: '357D446C-6E0C-4438-B230-8144079DB145',
     init: {
         value: {
             dout: 33

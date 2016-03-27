@@ -11,6 +11,7 @@ var iot = iotdb.iot();
 
 var things = iot.connect({
     model: 'PinOut',
+    uuid: 'A6A58781-8402-4D5B-99A4-8D5456E35D32',
     init: {
         "value": {
             "dout": 33,

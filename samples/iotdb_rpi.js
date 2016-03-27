@@ -11,6 +11,7 @@ var iot = iotdb.iot();
 
 var pin_input = iot.connect({
     model: 'PinIn',
+    uuid: '90F8532E-E36D-47CE-96D5-5E9A2CB04FCC',
     init: {
         "value": {
             "din": 35,
