@@ -46,12 +46,12 @@ var logger = iotdb.logger({
 var GPIOBridge = function (initd, native) {
     var self = this;
 
-    self.initd = _.defaults(
+    self.initd = _.d.compose.shallow(
         initd,
         iotdb.keystore().get("bridges/GPIOBridge/initd"),
         {
             uuid: null, 
-        },
+        }
     );
 
     self.native = native;
