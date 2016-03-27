@@ -49,11 +49,23 @@ var GPIOBridge = function (initd, native) {
     self.initd = _.defaults(
         initd,
         iotdb.keystore().get("bridges/GPIOBridge/initd"),
-        {}
+        {
+            uuid: null, 
+        },
     );
 
     self.native = native;
-    self.istate = {};
+
+    if (self.native) {
+        self.istate = {};
+        if (!self.initd.uuid) {
+            logger.error({
+                method: "GPIOBridge",
+                initd: self.initd,
+                cause: "caller should initialize with an 'uuid', used to uniquely identify things over sessions",
+            }, "missing initd.uuid - problematic");
+        }
+    }
 };
 
 GPIOBridge.prototype = new iotdb.Bridge();
@@ -209,13 +221,7 @@ GPIOBridge.prototype.meta = function () {
     }
 
     return {
-        "iot:thing-id": _.id.thing_urn.unique("GPIO", self.native.uuid, self.initd.number),
-        "schema:name": self.native.name || "GPIO",
-
-        // "iot:thing-number": self.initd.number,
-        // "iot:device-id": _.id.thing_urn.unique("GPIO", self.native.uuid),
-        // "schema:manufacturer": "",
-        // "schema:model": "",
+        "iot:thing-id": _.id.thing_urn.unique("GPIO", self.initd.uuid),
     };
 };
 
