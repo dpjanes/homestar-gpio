@@ -13,7 +13,7 @@ const _ = iotdb._;
 
 const Bridge = require('../GPIOBridge').Bridge;
 
-const exemplar = new Bridge({
+const bridge_instance = new Bridge({
     init: {
         "red": {
             "din": 35,
@@ -23,7 +23,7 @@ const exemplar = new Bridge({
         },
     },
 });
-exemplar.discovered = function (bridge) {
+bridge_instance.discovered = function (bridge) {
     console.log("+", "got one", bridge.meta());
 
     bridge.pulled = function(pulld) {
@@ -32,4 +32,4 @@ exemplar.discovered = function (bridge) {
 
     bridge.connect({});
 };
-exemplar.discover();
+bridge_instance.discover();

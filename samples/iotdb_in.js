@@ -13,18 +13,9 @@ var things = iot.connect({
     model: 'PinIn',
     init: {
         value: {
-            din: 10
+            din: 35
         },
     },
-    /*
-    pins: [
-        {
-            pin: 10,
-            attribute: "value",
-            input: true,
-        },
-    ]
-    */
 });
 things.on("state", function(thing) {
     console.log("+", "state", thing.thing_id(), "\n ", thing.state("istate"));

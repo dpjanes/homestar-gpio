@@ -14,18 +14,9 @@ var things = iot.connect({
     bridge: "GPIOBridge",
     init: {
         value: {
-            dout: 11
+            dout: 33
         },
     }
-/*
-    pins: [
-        {
-            pin: 11,
-            attribute: "value",
-            output: true,
-        },
-    ]
-*/
 });
 
 things.on("state", function(thing) {

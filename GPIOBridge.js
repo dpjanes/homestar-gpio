@@ -194,7 +194,7 @@ GPIOBridge.prototype.pull = function () {
         return;
     }
 
-    self.native.pull(self);
+    // self.native.pull(self);
 };
 
 /* --- state --- */

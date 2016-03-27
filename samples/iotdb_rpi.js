@@ -15,23 +15,19 @@ var iot = iotdb.iot();
  */
 var pin_input = iot.connect({
     model: 'PinIn',
-    pins: [
-        {
-            pin: 10,
-            attribute: "value",
-            input: true,
+    init: {
+        "value": {
+            "din": 35,
         },
-    ]
+    },
 });
 var pin_output = iot.connect({
     model: 'PinOut',
-    pins: [
-        {
-            pin: 11,
-            attribute: "value",
-            output: true,
+    init: {
+        "value": {
+            "dout": 33,
         },
-    ]
+    },
 });
 
 /*
