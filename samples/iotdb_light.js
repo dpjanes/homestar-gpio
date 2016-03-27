@@ -6,6 +6,8 @@
 
 "use strict";
 
+console.log("#", "this may not be working");
+
 var iotdb = require('iotdb');
 var iot = iotdb.iot();
 
