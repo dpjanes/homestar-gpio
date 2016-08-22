@@ -3,7 +3,6 @@
     "@base": "file:///pin-out",
     "@vocab": "file:///pin-out#",
     "iot": "https://iotdb.org/pub/iot#",
-    "schema": "http://schema.org/",
     "iot-purpose": "https://iotdb.org/pub/iot-purpose#",
     "iot:purpose": {
       "@id": "https://iotdb.org/pub/iot#purpose",
@@ -12,22 +11,24 @@
     "iot:type": {
       "@id": "https://iotdb.org/pub/iot#type",
       "@type": "@id"
-    }
+    },
+    "schema": "http://schema.org/"
   },
   "@id": "",
   "@type": "iot:Model",
-  "schema:name": "PinOut",
   "iot:attribute": [
     {
-      "@type": "iot:Attribute",
       "@id": "#value",
-      "schema:name": "value",
+      "@type": "iot:Attribute",
+      "iot:actuator": true,
       "iot:purpose": "iot-purpose:value",
-      "iot:type": "iot:type.boolean",
       "iot:read": false,
+      "iot:sensor": true,
+      "iot:type": "iot:type.boolean",
       "iot:write": true,
-      "iot:sensor": false,
-      "iot:actuator": true
+      "schema:name": "value"
     }
-  ]
+  ],
+  "iot:model-id": "pin-out",
+  "schema:name": "PinOut"
 }

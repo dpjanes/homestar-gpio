@@ -1,5 +1,5 @@
 # homestar-gpio
-IOTDB / HomeStar Controller for GPIO (e.g. Raspberry Pi, BeagleBone, Intel Edison…)
+[IOTDB](https://github.com/dpjanes/node-iotdb) Bridge for GPIO (e.g. Raspberry Pi, BeagleBone, Intel Edison…)
 
 <img src="https://raw.githubusercontent.com/dpjanes/iotdb-homestar/master/docs/HomeStar.png" align="right" />
 
