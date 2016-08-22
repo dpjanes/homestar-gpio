@@ -31,8 +31,8 @@ var pin_output = iot.connect({
  *  General monitoring of what's happening internally
  */
 var things = iot.things();
-things.on("state", function(thing) {
-    console.log("+", "state", thing.thing_id(), "\n ", thing.state("istate"));
+things.on("istate", function(thing) {
+    console.log("+", "istate", thing.thing_id(), "\n ", thing.state("istate"));
 });
 things.on("meta", function(thing) {
     console.log("+", "meta", thing.thing_id(), "\n ", thing.state("meta"));

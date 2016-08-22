@@ -22,8 +22,8 @@ var things = iot.connect({
     }
 });
 
-things.on("state", function(thing) {
-    console.log("+", "state", thing.thing_id(), "\n ", thing.state("istate"));
+things.on("istate", function(thing) {
+    console.log("+", "istate", thing.thing_id(), "\n ", thing.state("istate"));
 });
 things.on("meta", function(thing) {
     console.log("+", "meta", thing.thing_id(), "\n ", thing.state("meta"));
