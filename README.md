@@ -5,12 +5,11 @@
 
 # Installation
 
-Install Home☆Star first. 
-See: https://github.com/dpjanes/iotdb-homestar#installation
+* [Read this first](https://github.com/dpjanes/node-iotdb/blob/master/docs/install.md)
 
-Then
+Then:
 
-    $ homestar install homestar-gpio
+    $ npm install homestar-gpio
 
 # Technical Notes
 
