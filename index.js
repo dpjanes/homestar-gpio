@@ -27,3 +27,5 @@ exports.bindings = [
     require('./models/PinIn').binding,
     require('./models/PinOut').binding,
 ];
+
+exports.module_folder = __dirname;
