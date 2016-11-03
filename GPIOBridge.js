@@ -70,10 +70,6 @@ var GPIOBridge = function (initd, native) {
 
 GPIOBridge.prototype = new iotdb.Bridge();
 
-GPIOBridge.prototype.name = function () {
-    return "GPIOBridge";
-};
-
 /* --- lifecycle --- */
 
 /**
